@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X Article → PDF</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --border:    #2a2a30;
+      --accent:    #4f8ef7;
+      --accent-glow: rgba(79, 142, 247, 0.18);
+      --success:   #34d399;
+      --warn:      #fbbf24;
+      --danger:    #f87171;
+      --text:      #e8e8ed;
+      --muted:     #7a7a8a;
+      --font:      'Segoe UI', system-ui, -apple-system, sans-serif;
+      --radius:    10px;
+    }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.5;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    .logo svg { width: 16px; height: 16px; fill: #fff; }
+
+    .header-text h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── Body ───────────────────────────────────────────────────────── */
+    .body { padding: 14px 16px; }
+
+    /* ── URL Badge ──────────────────────────────────────────────────── */
+    .url-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      overflow: hidden;
+    }
+
+    .url-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--danger);
+      transition: background 0.3s;
+    }
+    .url-badge.valid .dot { background: var(--success); }
+
+    .url-badge span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Warning ────────────────────────────────────────────────────── */
+    .warn-box {
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.25);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 11.5px;
+      color: var(--warn);
+      line-height: 1.4;
+    }
+    .warn-box.show { display: flex; }
+    .warn-box svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Progress Area ──────────────────────────────────────────────── */
+    .progress-area {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .progress-area.show { display: flex; }
+
+    .phase-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+    .phase-label strong { color: var(--text); font-weight: 500; }
+
+    .bar-track {
+      height: 4px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.25s ease;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .phase-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .phase-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .phase-item.active  { color: var(--accent); }
+    .phase-item.done    { color: var(--success); }
+
+    .phase-item .icon { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── Button ─────────────────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 0 18px var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover:not(:disabled) {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn:active:not(:disabled) { transform: translateY(0); }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── Success / Error Banner ──────────────────────────────────────── */
+    .result-banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 12px;
+      min-width: 0;
+    }
+    .result-banner.show { display: flex; }
+    .result-banner.success {
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.25);
+      color: var(--success);
+    }
+    .result-banner.error {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+    .result-banner svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    #resultText {
+      flex: 1;
+      min-width: 0;
+      display: block;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    .footer {
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--border);
+      font-size: 10.5px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+    </div>
+    <div class="header-text">
+      <h1>X Article → PDF</h1>
+      <p>Text-only · No images · Clean export</p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Current URL indicator -->
+    <div class="url-badge" id="urlBadge">
+      <span class="dot"></span>
+      <span id="urlText">Checking page…</span>
+    </div>
+
+    <!-- Not-an-article warning -->
+    <div class="warn-box" id="warnBox">
+      <!-- warning icon -->
+      <svg class="icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Navigate to an X Article page (<code>x.com/i/articles/…</code>) to enable export.</span>
+    </div>
+
+    <!-- Progress phases -->
+    <div class="progress-area" id="progressArea">
+      <div class="phase-label">
+        <strong id="phaseLabel">Scrolling…</strong>
+        <span id="phasePct">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+      <div class="phase-list">
+        <div class="phase-item" id="phase-scroll">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12l10 10 10-10"/></svg>
+          Scrolling page &amp; loading content
+        </div>
+        <div class="phase-item" id="phase-extract">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Extracting article text
+        </div>
+        <div class="phase-item" id="phase-pdf">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Generating &amp; downloading PDF
+        </div>
+      </div>
+    </div>
+
+    <!-- Main CTA -->
+    <button class="btn" id="convertBtn" disabled>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="btnText">Convert to PDF</span>
+    </button>
+
+    <!-- Result feedback -->
+    <div class="result-banner" id="resultBanner">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="resultIcon"></svg>
+      <span id="resultText"></span>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">Works on x.com/i/articles/… pages</div>
+
+  <!-- jsPDF (local copy – see README) -->
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
